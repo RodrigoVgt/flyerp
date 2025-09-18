@@ -1,0 +1,23 @@
+{
+  "name": "flyerp",
+  "version": "1.0.0",
+  "description": "Api connection to Fly ERP",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RodrigoVgt/flyerp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RodrigoVgt/flyerp/issues"
+  },
+  "homepage": "https://github.com/RodrigoVgt/flyerp#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
