@@ -5,12 +5,16 @@ const SentFiles = new mongoose.Schema({
         type: String,
         required: true,
     },
-    email: {
+    phone: {
         type: String,
-        required: true,
-        unique: true,
+        required: true
     },
-    createdAt: {
+    status: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    sent_at: {
         type: Date,
         default: Date.now,
     },
