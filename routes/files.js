@@ -1,17 +1,24 @@
 const express = require('express')
 const router = express.Router()
 
-const SentFiles = require('../models/sent_files')
+const Files = require('../controllers/files')
 
-const axios = require('axios')
-
-router.get('/', async (req, res) => {
+router.get('/get_files', async (req, res) => {
     try {
-        console.log("ok")
+        const fileList = await Files.getFilesToSend(req, res)
         return res.status(200).json("ok")
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
-});
+})
+
+router.get('/get_customers', async (req, res) => {
+    try {
+        const customerList = await Files.getCustomersToSend(req, res)
+        return res.status(200).json("ok")
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
 
 module.exports = router
