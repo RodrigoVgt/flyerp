@@ -1,32 +1,45 @@
 const Files = () => {}
 
 const SentFiles = require('../models/sent_files')
+const FilesToSend = require('../models/files_to_send')
 
 const axios = require('axios')
 
-Files.getFilesToSend = async (req, res) => {
+Files.getFilesToSend = async (date) => {
     try {
-        const fileList = await fetchAllRecords()
-        return fileList
+      const date = new Date().toISOString('pt-BR').split('T')[0]
+      const fileList = await fetchAllRecords(date)
+      return fileList
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
 }
 
-Files.getCustomersToSend = async (req, res) => {
+Files.getCustomersToSend = async (id) => {
     try {
-        const customerList = await getCustomer()
+        const customerList = await getCustomer(id)
         return customerList
     } catch (err) {
-        res.status(500).json({ message: err.message })
+      return null
     }
 }
 
-async function fetchAllRecords(inicioRegistros = 0, allRecords = []) {
+Files.getDayFiles = async function () {
+  try {
+    return await FilesToSend.find({sent: false})
+  } catch (err) {
+    console.log(err)
+    return null
+  }
+}
+
+async function fetchAllRecords(inicioRegistros = 0, allRecords = [], date) {
   const response = await axios.get(`${process.env.BUSSINES_NAME}.flyerp.com.br/apis/GetContasAReceber`, {
     params: {
       "status": "aberto",
-      "inicioRegistros": inicioRegistros
+      "inicioRegistros": inicioRegistros,
+      "dataVencimentoInicial": date,
+      "dataVencimentoFinal": date
     },
     headers: {
       'Authorization': `Bearer ${process.env.TOKEN}`
@@ -40,13 +53,13 @@ async function fetchAllRecords(inicioRegistros = 0, allRecords = []) {
     return allRecords
   }
 
-  return fetchAllRecords(inicioRegistros + 500, allRecords);
+  return fetchAllRecords(inicioRegistros + 500, allRecords, date);
 }
 
-async function getCustomer() {
+async function getCustomer(code) {
     const response = await axios.get(`${process.env.BUSSINES_NAME}.flyerp.com.br/apis/GetClienteEFornecedores`, {
         params: {
-            "enquadramento": 1
+            "codigoCliente": code
         },
         headers: {
             'Authorization': `Bearer ${process.env.TOKEN}`
