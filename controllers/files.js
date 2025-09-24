@@ -1,17 +1,29 @@
 const Files = () => {}
 
-const SentFiles = require('../models/sent_files')
+require('dotenv').config()
 const FilesToSend = require('../models/files_to_send')
 
 const axios = require('axios')
 
 Files.getFilesToSend = async (date) => {
     try {
-      const date = new Date().toISOString('pt-BR').split('T')[0]
-      const fileList = await fetchAllRecords(date)
+      const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
+      const fileList = await fetchAllRecords(stringDate)
       return fileList
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        console.log(err)
+        return []
+    }
+}
+
+Files.getNewEmission = async (date) => {
+    try {
+        const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
+        const fileList = await fetchDayRecords(stringDate)
+        return fileList
+    } catch (err) {
+        console.log(err)
+        return []
     }
 }
 
@@ -20,6 +32,7 @@ Files.getCustomersToSend = async (id) => {
         const customerList = await getCustomer(id)
         return customerList
     } catch (err) {
+      console.log(err + id)
       return null
     }
 }
@@ -33,39 +46,79 @@ Files.getDayFiles = async function () {
   }
 }
 
-async function fetchAllRecords(inicioRegistros = 0, allRecords = [], date) {
-  const response = await axios.get(`${process.env.BUSSINES_NAME}.flyerp.com.br/apis/GetContasAReceber`, {
-    params: {
-      "status": "aberto",
-      "inicioRegistros": inicioRegistros,
-      "dataVencimentoInicial": date,
-      "dataVencimentoFinal": date
-    },
-    headers: {
-      'Authorization': `Bearer ${process.env.TOKEN}`
+async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
+  try {
+    const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
+    const response = await axios.get(url, {
+      params: {
+        "status": "aberto",
+        "inicioRegistros": inicioRegistros,
+        "dataVencimentoInicial": date,
+        "dataVencimentoFinal": date
+      },
+      headers: {
+        'Authorization': `Bearer ${process.env.TOKEN}`
+      }
+    });
+
+    const newRecords = response.data
+    allRecords.push(...newRecords)
+
+    if (newRecords.length < 500) {
+      return allRecords
     }
-  });
 
-  const newRecords = response.data
-  allRecords.push(...newRecords)
-
-  if (newRecords.length < 500) {
-    return allRecords
+    return fetchAllRecords(inicioRegistros + 500, allRecords, date);
+  } catch (err) {
+    console.log(err)
+    return []
   }
+}
 
-  return fetchAllRecords(inicioRegistros + 500, allRecords, date);
+async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
+  try {
+    const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
+      const response = await axios.get(url, {
+        params: {
+          "status": "aberto",
+          "inicioRegistros": inicioRegistros,
+          "dataEmissaoInicial": date,
+          "dataEmissaoFinal": date
+        },
+        headers: {
+          'Authorization': `Bearer ${process.env.TOKEN}`
+        }
+      });
+      const newRecords = response.data
+      allRecords.push(...newRecords)
+
+      if (newRecords.length < 500) {
+        return allRecords
+      }
+
+      return fetchDayRecords(inicioRegistros + 500, allRecords, date);
+  } catch (err) {
+    console.log(err)
+    return []
+  }
 }
 
 async function getCustomer(code) {
-    const response = await axios.get(`${process.env.BUSSINES_NAME}.flyerp.com.br/apis/GetClienteEFornecedores`, {
+  try {
+    const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetClienteEFornecedores`
+    const response = await axios.get(url, {
         params: {
-            "codigoCliente": code
+            "codigo": code
         },
         headers: {
             'Authorization': `Bearer ${process.env.TOKEN}`
         }
     });
-    return response.data
+    return response?.data[0] || []
+  } catch (err) {
+    console.log(err)
+    return null
+  }
 }
 
 

@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require('../database/db');
 
-const SentFiles = new mongoose.Schema({
+const FilesToSend = new mongoose.Schema({
     customer_id: {
         type: String,
         required: true
@@ -11,21 +11,19 @@ const SentFiles = new mongoose.Schema({
     },
     phone: {
         type: String,
-        required: true
     },
     phone2: {
         type: String,
-        required: true
     },
     status: {
         type: String,
         default: 'abertos'
     },
     payment_start_date: {
-        type: Date,
+        type: String,
     },
     payment_end_date: {
-        type: Date,
+        type: String,
     },
     sent: {
         type: Boolean,
@@ -46,4 +44,4 @@ const SentFiles = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('SentFiles', SentFiles);
+module.exports = mongoose.model('FilesToSend', FilesToSend);

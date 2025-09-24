@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('../database/db');
 
 const SentFiles = new mongoose.Schema({
     name: {
@@ -18,6 +18,10 @@ const SentFiles = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    messageId: {
+        type: String,
+        required: true
+    }
 });
 
 module.exports = mongoose.model('SentFiles', SentFiles);

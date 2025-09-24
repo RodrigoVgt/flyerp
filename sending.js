@@ -1,13 +1,14 @@
 const schedule = require('node-schedule')
+require('dotenv').config()
 
 const Files = require('./controllers/files')
 
 const FileToSend = require('./models/files_to_send')
 const SentFiles = require('./models/sent_files')
 
-const Sender = require('./sender')
+const Sender = require('./Sender/sender')
 
-schedule.scheduleJob('0 4 * * *', async () => {
+schedule.scheduleJob('03 21 * * *', async () => {
     try {
         const tenDaysDate = createDate(10)
         const sevenDaysDate = createDate(7)
@@ -17,17 +18,17 @@ schedule.scheduleJob('0 4 * * *', async () => {
         const oneDayAfterDate = createDate(-1)
         const fiveDaysAfterDate = createDate(-5)
         const tenDaysAfterDate = createDate(-10)
+        const emissionDate = new Date()
 
-        const [tenDays, sevenDays, threeDays, oneDay, day, oneDayAfter, fiveDaysAfter, tenDaysAfter] = await Promise.all([
-            Files.getFilesToSend(tenDaysDate),
-            Files.getFilesToSend(sevenDaysDate),
-            Files.getFilesToSend(threeDaysDate),
-            Files.getFilesToSend(oneDayDate),
-            Files.getFilesToSend(dayDate),
-            Files.getFilesToSend(oneDayAfterDate),
-            Files.getFilesToSend(fiveDaysAfterDate),
-            Files.getFilesToSend(tenDaysAfterDate),
-        ])
+        const tenDays = await Files.getFilesToSend(tenDaysDate)
+        const sevenDays = await Files.getFilesToSend(sevenDaysDate)
+        const threeDays = await Files.getFilesToSend(threeDaysDate)
+        const oneDay = await Files.getFilesToSend(oneDayDate)
+        const day = await Files.getFilesToSend(dayDate)
+        const oneDayAfter = await Files.getFilesToSend(oneDayAfterDate)
+        const fiveDaysAfter = await Files.getFilesToSend(fiveDaysAfterDate)
+        const tenDaysAfter = await Files.getFilesToSend(tenDaysAfterDate)
+        const emission = await Files.getNewEmission(emissionDate)
 
         const filesWithDate = [
             ...tenDays.map(file => ({ ...file, origin: 10 })),
@@ -37,7 +38,8 @@ schedule.scheduleJob('0 4 * * *', async () => {
             ...day.map(file => ({ ...file, origin: 0 })),
             ...oneDayAfter.map(file => ({ ...file, origin: -1 })),
             ...fiveDaysAfter.map(file => ({ ...file, origin: -5 })),
-            ...tenDaysAfter.map(file => ({ ...file, origin: -10 }))
+            ...tenDaysAfter.map(file => ({ ...file, origin: -10 })),
+            ...emission.map(file => ({ ...file, origin: 'emissao' }))
         ]
         
         for(const iterator of filesWithDate){
@@ -48,6 +50,7 @@ schedule.scheduleJob('0 4 * * *', async () => {
             }
         }
 
+        const done = true
     }   catch (err) {
         console.log(err)
     }
@@ -62,7 +65,7 @@ schedule.scheduleJob('0 8 * * *', async () => {
                 const response = await Sender.sendFile(iterator)
                 if(response)
                     await iterator.update({ sent: true, sent_at: new Date() })
-                    await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date() }).save()
+                    await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date(), messageId: response.messages[0].id}).save()
             } catch (err) {
                 console.log(err)
             }
@@ -80,9 +83,9 @@ async function createFileToSend(file){
         const newFile = new FileToSend({
             customer_id: file.codigo_cliente,
             name: file.nome_cliente,
-            phone: customer[0].telefone,
-            phone2: customer[0].telefone2,
-            status: file.url_pagamento ? 'abertos' : 'pagos',
+            phone: customer.telefone,
+            phone2: customer.telefone2,
+            status: file.url_pagamento ? 'pagos' : 'abertos',
             payment_start_date: file.data_emissao,
             payment_end_date: file.data_vencimento,
             sent: false,
