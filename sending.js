@@ -9,7 +9,7 @@ const SentFiles = require('./models/sent_files')
 const Sender = require('./Sender/sender')
 const User = require('./controllers/user')
 
-schedule.scheduleJob('03 21 * * *', async () => {
+schedule.scheduleJob('14 19 * * *', async () => {
     try {
         const tenDaysDate = createDate(10)
         const sevenDaysDate = createDate(7)
