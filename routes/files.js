@@ -1,6 +1,5 @@
 const express = require('express')
 const router = express.Router()
-const mongoose = require('mongoose')
 require ('dotenv').config()
 
 const FilesToSend = require('../models/files_to_send')
