@@ -7,6 +7,7 @@ const FileToSend = require('./models/files_to_send')
 const SentFiles = require('./models/sent_files')
 
 const Sender = require('./Sender/sender')
+const User = require('./controllers/user')
 
 schedule.scheduleJob('03 21 * * *', async () => {
     try {
@@ -80,6 +81,9 @@ async function createFileToSend(file){
     try {
         const customer = await Files.getCustomersToSend(file.codigo_cliente)
 
+        const validCustomer = await validateCustomer(customer)
+        if (!validCustomer) return
+
         const newFile = new FileToSend({
             customer_id: file.codigo_cliente,
             name: file.nome_cliente,
@@ -98,6 +102,34 @@ async function createFileToSend(file){
         await newFile.save()
     } catch (err) {
         console.log(err)
+    }
+}
+
+async function validateCustomer(customer){
+    try {
+        if(!customer) return false
+        if(!customer.telefone && !customer.telefone2) return false
+
+        const phone = customer.telefone ? customer.telefone : customer.telefone2
+        const formattedPhone = phone.replace(/\D/g, '')
+
+        const customerExists = await User.getCustomer(formattedPhone)
+        if(!customerExists) return true
+
+        if(customerExists && !customerExists.name)
+            await User.updateUser({
+                name: customer.nome_fantasia ? customer.nome_fantasia : customer.razao_social,
+                phone: formattedPhone,
+                block_messages: customerExists.block_messages,
+                user_code: customer.codigo
+            })
+
+        if(customerExists.block_messages) return false
+
+        return true
+    } catch (err) {
+        console.log(err)
+        return false
     }
 }
 

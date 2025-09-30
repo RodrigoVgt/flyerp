@@ -1,8 +1,8 @@
 const MessageEntry = () => {}
 
 const gpt = require('./GptController')
-const { contactPrompt } = require('../extras/prompts')
 const WabaController = require('./wabaController')
+const User = require('./user')
 
 /**
  * Processa a entrada de mensagem do whatsapp
@@ -18,16 +18,28 @@ const WabaController = require('./wabaController')
 MessageEntry.entry = async function(params){
     try {
         const userMessage = params.body.mensagem
+        const sender = params.body.sender
 
-        const validMessage = await gpt.getResponse((contactPrompt + userMessage))
+        const validMessage = await gpt.getResponse(userMessage, sender)
 
-        if(validMessage === -1)
+        if(validMessage === '-1')
             return { success: true, message: 'Mensagem processada com sucesso' }
 
-        if(validMessage === 1){
-            const log = await createGptLog(sender)
+        if(validMessage === '1'){
             const response =await WabaController.sendContact(params)
             if(!response || log) return { success: false, message: 'Mensagem processada com sucesso' }
+            return { success: true, message: 'Mensagem processada com sucesso' }
+        }
+        if(validMessage == '0'){
+            const user = await getUser(sender)
+            if(!user) {
+                await createUser(sender)
+                return { success: true, message: 'Mensagem processada com sucesso' }
+            }
+            if(user && user.block_messages){
+                return { success: true, message: 'Mensagem processada com sucesso' }
+            }
+            await blockUser(sender)
             return { success: true, message: 'Mensagem processada com sucesso' }
         }
 
@@ -38,4 +50,33 @@ MessageEntry.entry = async function(params){
     }
 }
 
+async function getUser(sender){
+    try {
+        const customer = await User.getUser(sender)
+        return customer
+    } catch (err) {
+        console.log(err)
+        return null
+    }
+}
+
+async function createUser(sender){
+    try {
+        const user = await User.createUser(sender)
+        return user
+    } catch (err) {
+        console.log(err)
+        return null
+    }
+}
+
+async function blockUser(sender){
+    try {
+        const user = await User.blockUser(sender)
+        return user
+    } catch (err) {
+        console.log(err)
+        return null
+    }
+}
 module.exports = MessageEntry

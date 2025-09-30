@@ -1,7 +1,12 @@
 const GptController = () => {}
 
-GptController.getResponse = async function(prompt){
+const GptLog = require('../models/gpt_log')
+const axios = require('axios')
+const { contactPrompt } = require('../extras/prompts')
+
+GptController.getResponse = async function(message, sender){
         try {
+            const prompt = contactPrompt + message
             const data = {
                 response: ""
             }
@@ -26,11 +31,29 @@ GptController.getResponse = async function(prompt){
             data.entryTokens = response.data.usage.prompt_tokens
             data.responseTokens = response.data.usage.completion_tokens
 
-            return data
+            await this.createLog({
+                user_message: message,
+                response: data.response,
+                entry_tokens: data.entryTokens,
+                response_tokens: data.responseTokens,
+                user: sender.replace(/\D/g, '')
+            })
+
+            return data.response
         } catch (error) {
             console.error(error.message);
             return null
         }
+}
+
+GptController.createLog = async function(data){
+    try {
+        const log = await GptLog.create(data)
+        return log
+    } catch (err) {
+        console.log(err)
+        return null
+    }
 }
 
 module.exports = GptController
