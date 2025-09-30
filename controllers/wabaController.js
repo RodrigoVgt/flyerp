@@ -23,6 +23,21 @@ WabaController.sendFile = async (file, type) => {
     }
 }
 
+WabaController.sendContact = async (file) => {
+    try {
+        const phone = file.phone ? file.phone : file.phone2
+        const config = await buildWabaContact({phone})
+        const response = await sendWabaMessage(config)
+        return response
+    } catch (err) {
+        console.log(err)
+        return {
+            success: false,
+            message: err
+        }
+    }
+}
+
 async function sendWabaMessage(config) {
     try {
         if(process.env.TESTING == 'true'){
