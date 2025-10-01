@@ -4,7 +4,7 @@ require ('dotenv').config()
 
 const MessageEntry = require('../controllers/MessageEntry')
 
-router.post('/waba/:phone', async function(req, res) {
+router.post('/:phone', async function(req, res) {
     try {
 
         if (!req?.body?.entry?.length || !req.body.entry[0].changes?.length) {
@@ -44,7 +44,7 @@ router.post('/waba/:phone', async function(req, res) {
     }
 })
 
-router.get('/waba/:phone', async function (req, res) {
+router.get('/:phone', async function (req, res) {
     const mode = req.query['hub.mode']
     const token = req.query['hub.verify_token']
     const challenge = req.query['hub.challenge']

@@ -7,11 +7,14 @@ const PORT = process.env.PORT || 3000
 
 app.use(express.json())
 
-app
-  .use('/files', FilesRoute)
-  .use('/waba', WabaRouter)
+app.use(
+    '/files', FilesRoute
+);
 
-  
+app.use(
+    '/waba', WabaRouter
+);
+
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`)
 });
