@@ -23,6 +23,20 @@ WabaController.sendFile = async (file, type) => {
     }
 }
 
+WabaController.sendNoParamMessage = async (data) => {
+    try {
+        const config = await buildNoParamWabaMessage(data)
+        const response = await sendWabaMessage(config)
+        return response
+    } catch (err) {
+        console.log(err)
+        return {
+            success: false,
+            message: err
+        }
+    }
+}
+
 WabaController.sendContact = async (file) => {
     try {
         const phone = file.phone ? file.phone : file.phone2
@@ -103,6 +117,23 @@ async function buildWabaMessage(params, type){
     return config
 }
 
+async function buildNoParamWabaMessage(data){
+        const config = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": data.phone,
+        "type": "template",
+        "template": {
+            "name": data.template,
+            "language": {
+                "code": "pt_BR"
+            },
+        }
+    }
+
+    return config
+}
+
 async function buildWabaContact(params){
     const config = {
         "messaging_product": "whatsapp",
@@ -113,13 +144,12 @@ async function buildWabaContact(params){
                 "name": {
                     "formatted_name": process.env.CONTACT_FULL_NAME,
                     "first_name": process.env.CONTACT_FIRST_NAME,
-                    "last_name": process.env.CONTACT_LAST_NAME,
-                    "middle_name": process.env.CONTACT_MIDDLE_NAME
+                    "last_name": process.env.CONTACT_LAST_NAME
                 },
                 "phones": [
                     {
                         "phone": process.env.CONTACT_PHONE,
-                        "wa_id": process.env.CONTACT_WA_ID,
+                        "wa_id": process.env.CONTACT_WABA_ID,
                         "type": "WORK"
                     }
                 ],

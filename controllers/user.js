@@ -28,12 +28,12 @@ User.blockUser = async function(phone){
 User.updateUser = async function(params){
     try {
         const formattedPhone = params.phone.replace(/\D/g, '')
-        const user = await UserModel.findOneAndUpdate({
+        const user = await UserModel.findOneAndUpdate({ phone: formattedPhone }, {$set:{
             name: params.name,
             phone: formattedPhone,
             block_messages: params.block_messages,
             user_code: params.user_code
-        })
+        }})
         return user
     } catch (err) {
         console.log(err)

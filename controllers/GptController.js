@@ -13,7 +13,7 @@ GptController.getResponse = async function(message, sender){
             const response = await axios.post(
                 'https://api.openai.com/v1/chat/completions',
                 {
-                    model: 'gpt-4o-mini', // Ou outro modelo disponível
+                    model: 'gpt-5-nano', // Ou outro modelo disponível
                     messages: [{ role: 'assistant', content: prompt }],
                     temperature: 0.7,
                 },

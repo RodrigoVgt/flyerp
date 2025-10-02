@@ -20,18 +20,30 @@ MessageEntry.entry = async function(params){
         const userMessage = params.body.mensagem
         const sender = params.body.sender
 
+        const user = await getUser(sender)
+
+        if(user.block_messages){
+            if(userMessage.toLowerCase().includes("voltar")){
+                await User.updateUser({ phone: sender, block_messages: false, user_code: user.user_code, name: user.name })
+                return { success: true, message: 'Mensagem processada com sucesso' }
+            }
+            return { success: true, message: 'Mensagem processada com sucesso' }
+        }
+
         const validMessage = await gpt.getResponse(userMessage, sender)
 
-        if(validMessage === '-1')
-            return { success: true, message: 'Mensagem processada com sucesso' }
-
-        if(validMessage === '1'){
-            const response =await WabaController.sendContact(params)
+        if(validMessage === '1' || validMessage === '-1'){
+            await WabaController.sendNoParamMessage({phone: sender, template: "send_contact"})
+            const response =await WabaController.sendContact({
+                phone: sender,
+                name: user.name
+            })
+            const log = await User.updateUser({ phone: sender, block_messages: false, user_code: user.user_code, name: user.name })
             if(!response || log) return { success: false, message: 'Mensagem processada com sucesso' }
             return { success: true, message: 'Mensagem processada com sucesso' }
         }
         if(validMessage == '0'){
-            const user = await getUser(sender)
+            await WabaController.sendNoParamMessage({phone: sender, template: "stop_receiving_messages"})
             if(!user) {
                 await createUser(sender)
                 return { success: true, message: 'Mensagem processada com sucesso' }
