@@ -96,7 +96,8 @@ async function createFileToSend(file){
             origin: file.origin,
             link_boleto: file.link_boleto,
             link_fatura: file.link_fatura,
-            url_pagamento: file.url_pagamento
+            url_pagamento: file.url_pagamento,
+            token: file.token
         })
 
         await newFile.save()

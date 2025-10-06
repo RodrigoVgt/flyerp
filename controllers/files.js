@@ -8,7 +8,16 @@ const axios = require('axios')
 Files.getFilesToSend = async (date) => {
     try {
       const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
-      const fileList = await fetchAllRecords(stringDate)
+      const fileListAdm = await fetchAllRecords(stringDate, process.env.TOKEN_ADM)
+      const fileListLtda = await fetchAllRecords(stringDate, process.env.TOKEN_LTDA)
+
+      for(const iterator of fileListAdm){
+        iterator.token = 'Adm'
+      }
+      for(const iterator of fileListLtda){
+        iterator.token = 'Ltda'
+      }
+      const fileList = fileListAdm.concat(fileListLtda)
       return fileList
     } catch (err) {
         console.log(err)
@@ -19,7 +28,16 @@ Files.getFilesToSend = async (date) => {
 Files.getNewEmission = async (date) => {
     try {
         const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
-        const fileList = await fetchDayRecords(stringDate)
+        const fileListAdm = await fetchDayRecords(stringDate, process.env.TOKEN_ADM)
+        const fileListLtda = await fetchDayRecords(stringDate, process.env.TOKEN_LTDA)
+
+        for(const iterator of fileListAdm){
+            iterator.token = 'Adm'
+        }
+        for(const iterator of fileListLtda){
+            iterator.token = 'Ltda'
+        }
+        const fileList = fileListAdm.concat(fileListLtda)
         return fileList
     } catch (err) {
         console.log(err)
@@ -46,7 +64,7 @@ Files.getDayFiles = async function () {
   }
 }
 
-async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
+async function fetchAllRecords(date, token, inicioRegistros = 0, allRecords = []) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
     const response = await axios.get(url, {
@@ -57,7 +75,7 @@ async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
         "dataVencimentoFinal": date
       },
       headers: {
-        'Authorization': `Bearer ${process.env.TOKEN}`
+        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -68,14 +86,14 @@ async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
       return allRecords
     }
 
-    return fetchAllRecords(inicioRegistros + 500, allRecords, date);
+    return fetchAllRecords(date, token, inicioRegistros + 500, allRecords);
   } catch (err) {
     console.log(err)
     return []
   }
 }
 
-async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
+async function fetchDayRecords(date, token, inicioRegistros = 0, allRecords = []) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
       const response = await axios.get(url, {
@@ -86,7 +104,7 @@ async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
           "dataEmissaoFinal": date
         },
         headers: {
-          'Authorization': `Bearer ${process.env.TOKEN}`
+          'Authorization': `Bearer ${token}`
         }
       });
       const newRecords = response.data
@@ -96,7 +114,7 @@ async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
         return allRecords
       }
 
-      return fetchDayRecords(inicioRegistros + 500, allRecords, date);
+      return fetchDayRecords(date, token, inicioRegistros + 500, allRecords);
   } catch (err) {
     console.log(err)
     return []

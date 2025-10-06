@@ -41,6 +41,10 @@ const FilesToSend = new mongoose.Schema({
     url_pagamento: {
         type: String,
         default: null
+    },
+    token: {
+        type: String,
+        default: null
     }
 });
 
