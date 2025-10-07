@@ -64,6 +64,15 @@ Files.getDayFiles = async function () {
   }
 }
 
+Files.updateOne = async function (id, data) {
+  try {
+    return await FilesToSend.updateOne({ _id: id }, { $set: data })
+  } catch (err) {
+    console.log(err)
+    return null
+  }
+}
+
 async function fetchAllRecords(date, token, inicioRegistros = 0, allRecords = []) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`

@@ -10,17 +10,14 @@ const SentFiles = new mongoose.Schema({
         required: true
     },
     status: {
-        type: Boolean,
-        required: true,
-        default: false
+        type: String,
     },
     sent_at: {
         type: Date,
         default: Date.now,
     },
     messageId: {
-        type: String,
-        required: true
+        type: String
     }
 });
 

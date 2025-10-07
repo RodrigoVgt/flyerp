@@ -57,7 +57,7 @@ schedule.scheduleJob('14 19 * * *', async () => {
     }
 })
 
-schedule.scheduleJob('0 8 * * *', async () => {
+schedule.scheduleJob('10 21 * * *', async () => {
     try {
         const filesToSend = await Files.getDayFiles()
 
@@ -65,8 +65,8 @@ schedule.scheduleJob('0 8 * * *', async () => {
             try {
                 const response = await Sender.sendFile(iterator)
                 if(response)
-                    await iterator.update({ sent: true, sent_at: new Date() })
-                    await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date(), messageId: response.messages[0].id}).save()
+                    await Files.updateOne(iterator._id, {sent: true})
+                    await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date(), messageId: response.messages ? response?.messages[0]?.id : null}).save()
             } catch (err) {
                 console.log(err)
             }

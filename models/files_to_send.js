@@ -45,6 +45,10 @@ const FilesToSend = new mongoose.Schema({
     token: {
         type: String,
         default: null
+    },
+    origin: {
+        type: String,
+        default: null
     }
 });
 

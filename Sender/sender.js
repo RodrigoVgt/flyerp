@@ -6,27 +6,37 @@ Sender.sendFile = async (file) => {
     try {
        let response
        switch (file.origin) {
-           case 10:
+           case "10":
                response = await WabaController.sendFile(file, "ten_days")
-           case 7:
+               break
+           case "7":
                response = await WabaController.sendFile(file, "seven_days")
-           case 3:
+               break
+           case "3":
                response = await WabaController.sendFile(file, "three_days")
-           case 1:
+               break
+           case "1":
                response = await WabaController.sendFile(file, "one_day")
-           case 0:
+               break
+           case "0":
                response = await WabaController.sendFile(file, "done")
-           case -1:
+               break
+           case "-1":
                response = await WabaController.sendFile(file, "one_day_after")
-           case -5:
+               break
+           case "-5":
                response = await WabaController.sendFile(file, "five_days_after")
-           case -10:
+               break
+           case "-10":
                response = await WabaController.sendFile(file, "ten_days_after")
+               break
            case 'emissao':
                response = await WabaController.sendFile(file, "day")
+               break
            default:
                return null
        }
+       return response
     } catch (err) {
         console.log(err)
         return null
