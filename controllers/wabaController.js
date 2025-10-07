@@ -1,3 +1,5 @@
+const { default: axios } = require('axios')
+
 const WabaController = () => {}
 
 require('dotenv').config()
@@ -37,6 +39,20 @@ WabaController.sendNoParamMessage = async (data) => {
     }
 }
 
+WabaController.sendNoTemplateMessage = async (data) => {
+    try {
+        const config = await buildNoTemplateWabaMessage(data)
+        const response = await sendWabaMessage(config)
+        return response
+    } catch (err) {
+        console.log(err)
+        return {
+            success: false,
+            message: err
+        }
+    }
+}
+
 WabaController.sendContact = async (file) => {
     try {
         const phone = file.phone ? file.phone : file.phone2
@@ -61,14 +77,11 @@ async function sendWabaMessage(config) {
             }
         }
         const url = `https://graph.facebook.com/${process.env.WABA_VERSION}/${process.env.WABA_PHONE_NUMBER_ID}/messages`
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
+        const headers = {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + process.env.WABA_ACCESS_TOKEN
-            },
-            body: JSON.stringify(config)
-        })
+            }
+        const response = await axios.post(url, JSON.stringify(config), {headers})
         if(response.status != 200)
             throw new Error(response.statusText ? response.statusText : response.data.error.message)
         
@@ -89,7 +102,7 @@ async function buildWabaMessage(params, type){
     const config = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": params.phone,
+        "to": "55" + params.phone,
         "type": "template",
         "template": {
             "name": type,
@@ -121,13 +134,27 @@ async function buildNoParamWabaMessage(data){
         const config = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": data.phone,
+        "to": "55" + data.phone,
         "type": "template",
         "template": {
             "name": data.template,
             "language": {
                 "code": "pt_BR"
             },
+        }
+    }
+
+    return config
+}
+
+async function buildNoTemplateWabaMessage(data){
+    const config = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": "55" + data.phone,
+        "type": "text",
+        "text": {
+            "body": data.message
         }
     }
 

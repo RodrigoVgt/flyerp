@@ -8,16 +8,21 @@ const axios = require('axios')
 Files.getFilesToSend = async (date) => {
     try {
       const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
-      const fileListAdm = await fetchAllRecords(stringDate, process.env.TOKEN_ADM)
-      const fileListLtda = await fetchAllRecords(stringDate, process.env.TOKEN_LTDA)
+      const fileList = []
 
-      for(const iterator of fileListAdm){
-        iterator.token = 'Adm'
+      const tokenList = process.env.TOKEN_LIST.split(',')
+
+      for(const token of tokenList){
+          const fileListAux = await fetchAllRecords(stringDate, token);
+
+          const fileListWithToken = fileListAux.map(iterator => ({
+              ...iterator,
+              token: token 
+          }));
+
+          fileList.push(...fileListWithToken);
       }
-      for(const iterator of fileListLtda){
-        iterator.token = 'Ltda'
-      }
-      const fileList = fileListAdm.concat(fileListLtda)
+
       return fileList
     } catch (err) {
         console.log(err)
@@ -27,17 +32,22 @@ Files.getFilesToSend = async (date) => {
 
 Files.getNewEmission = async (date) => {
     try {
-        const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
-        const fileListAdm = await fetchDayRecords(stringDate, process.env.TOKEN_ADM)
-        const fileListLtda = await fetchDayRecords(stringDate, process.env.TOKEN_LTDA)
+      const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
+      const fileList = []
 
-        for(const iterator of fileListAdm){
-            iterator.token = 'Adm'
-        }
-        for(const iterator of fileListLtda){
-            iterator.token = 'Ltda'
-        }
-        const fileList = fileListAdm.concat(fileListLtda)
+      const tokenList = process.env.TOKEN_LIST.split(',')
+
+      for(const token of tokenList){
+          const fileListAux = await fetchDayRecords(stringDate, token);
+
+          const fileListWithToken = fileListAux.map(iterator => ({
+              ...iterator,
+              token: token 
+          }));
+
+          fileList.push(...fileListWithToken);
+      }
+
         return fileList
     } catch (err) {
         console.log(err)
@@ -45,9 +55,9 @@ Files.getNewEmission = async (date) => {
     }
 }
 
-Files.getCustomersToSend = async (id) => {
+Files.getCustomersToSend = async (id, token) => {
     try {
-        const customerList = await getCustomer(id)
+        const customerList = await getCustomer(id, token)
         return customerList
     } catch (err) {
       console.log(err + id)
@@ -130,7 +140,7 @@ async function fetchDayRecords(date, token, inicioRegistros = 0, allRecords = []
   }
 }
 
-async function getCustomer(code) {
+async function getCustomer(code, token) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetClienteEFornecedores`
     const response = await axios.get(url, {
@@ -138,7 +148,7 @@ async function getCustomer(code) {
             "codigo": code
         },
         headers: {
-            'Authorization': `Bearer ${process.env.TOKEN}`
+            'Authorization': `Bearer ${token}`
         }
     });
     return response?.data[0] || []

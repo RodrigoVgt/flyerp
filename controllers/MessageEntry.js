@@ -3,6 +3,7 @@ const MessageEntry = () => {}
 const gpt = require('./GptController')
 const WabaController = require('./wabaController')
 const User = require('./user')
+const Messages = require('../extras/messages')
 
 /**
  * Processa a entrada de mensagem do whatsapp
@@ -22,9 +23,10 @@ MessageEntry.entry = async function(params){
 
         const user = await getUser(sender)
 
-        if(user.block_messages){
+        if(user && user.block_messages){
             if(userMessage.toLowerCase().includes("voltar")){
                 await User.updateUser({ phone: sender, block_messages: false, user_code: user.user_code, name: user.name })
+                await WabaController.sendNoTemplateMessage({phone: sender, message: Messages.welcomeMessage})
                 return { success: true, message: 'Mensagem processada com sucesso' }
             }
             return { success: true, message: 'Mensagem processada com sucesso' }
@@ -33,17 +35,16 @@ MessageEntry.entry = async function(params){
         const validMessage = await gpt.getResponse(userMessage, sender)
 
         if(validMessage === '1' || validMessage === '-1'){
-            await WabaController.sendNoParamMessage({phone: sender, template: "send_contact"})
+            await WabaController.sendNoTemplateMessage({phone: sender, message: Messages.contactMessage})
             const response =await WabaController.sendContact({
-                phone: sender,
-                name: user.name
+                phone: sender
             })
-            const log = await User.updateUser({ phone: sender, block_messages: false, user_code: user.user_code, name: user.name })
+            const log = await User.updateUser({ phone: sender, block_messages: false, user_code: user?.user_code, name: user?.name })
             if(!response || log) return { success: false, message: 'Mensagem processada com sucesso' }
             return { success: true, message: 'Mensagem processada com sucesso' }
         }
         if(validMessage == '0'){
-            await WabaController.sendNoParamMessage({phone: sender, template: "stop_receiving_messages"})
+            await WabaController.sendNoTemplateMessage({phone: sender, message: Messages.blockMessage})
             if(!user) {
                 await createUser(sender)
                 return { success: true, message: 'Mensagem processada com sucesso' }

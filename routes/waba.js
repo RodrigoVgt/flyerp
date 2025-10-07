@@ -6,7 +6,6 @@ const MessageEntry = require('../controllers/MessageEntry')
 
 router.post('/:phone', async function(req, res) {
     try {
-
         if (!req?.body?.entry?.length || !req.body.entry[0].changes?.length) {
             return res.status(200).send({})
         }
@@ -35,12 +34,12 @@ router.post('/:phone', async function(req, res) {
                 phone: req.params.phone || req?.body?.entry[0]?.changes[0]?.value?.metadata?.display_phone_number || ''
             }
         }
+        res.status(200).send({})
         const response = await MessageEntry.entry(params)
-    
-        return res.status(200).send(response)
+        
+        const done = true
     } catch (e){
         console.log(e)
-        res.status(500).send(e)
     }
 })
 

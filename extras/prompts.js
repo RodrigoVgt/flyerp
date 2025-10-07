@@ -1,7 +1,7 @@
 const contactPrompt = `Foi enviada uma mensagem com um link de pagamento para um usuário, e ele forneceu a resposta do final deste prompt.
  Verifique se a resposta fornecida indica que o usuário necessita ajuda ou qualquer coisa relacionada a interação humana.
  Caso sim, retorne o valor 1.
- Se ele indicar que não deseja mais receber lembretes, retorne 0.
+ Se ele indicar que não deseja mais receber lembretes, mensagens ou ajuda, retorne 0.
  caso contrário retorne -1.
  Resposta do usuário: `
 

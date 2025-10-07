@@ -2,7 +2,7 @@ const User = () => {}
 
 const UserModel = require('../models/user')
 
-User.getCustomer = async function(phone){
+User.getUser = async function(phone){
     try {
         const formattedPhone = phone.replace(/\D/g, '')
         const customer = await UserModel.findOne({ phone: formattedPhone })
@@ -33,7 +33,7 @@ User.updateUser = async function(params){
             phone: formattedPhone,
             block_messages: params.block_messages,
             user_code: params.user_code
-        }})
+        }}, { upsert: true })
         return user
     } catch (err) {
         console.log(err)

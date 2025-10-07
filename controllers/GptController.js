@@ -15,7 +15,6 @@ GptController.getResponse = async function(message, sender){
                 {
                     model: 'gpt-5-nano', // Ou outro modelo disponível
                     messages: [{ role: 'assistant', content: prompt }],
-                    temperature: 0.7,
                 },
                 {
                     headers: {
@@ -48,8 +47,27 @@ GptController.getResponse = async function(message, sender){
 
 GptController.createLog = async function(data){
     try {
+        data.response = getResponseString(data.response)
         const log = await GptLog.create(data)
         return log
+    } catch (err) {
+        console.log(err)
+        return null
+    }
+}
+
+function getResponseString(response){
+    try {
+        switch (response) {
+            case '-1':
+                return '-1: Não foi possível obter uma resposta adequada.'
+            case '1':
+                return '1: Deseja falar com um atendente.'
+            case '0':
+                return '0: Não deseja mais receber lembretes.'
+            default:
+                return response
+        }
     } catch (err) {
         console.log(err)
         return null

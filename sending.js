@@ -9,7 +9,7 @@ const SentFiles = require('./models/sent_files')
 const Sender = require('./Sender/sender')
 const User = require('./controllers/user')
 
-schedule.scheduleJob('14 19 * * *', async () => {
+schedule.scheduleJob('00 12 * * *', async () => {// lembrar que aqui está -3h
     try {
         const tenDaysDate = createDate(10)
         const sevenDaysDate = createDate(7)
@@ -57,7 +57,7 @@ schedule.scheduleJob('14 19 * * *', async () => {
     }
 })
 
-schedule.scheduleJob('10 21 * * *', async () => {
+schedule.scheduleJob('00 13 * * *', async () => { //lembrar que aqui está -3h, se colocar pra enviar as 8, vai enviar as 5h da manha!
     try {
         const filesToSend = await Files.getDayFiles()
 
@@ -79,7 +79,8 @@ schedule.scheduleJob('10 21 * * *', async () => {
 
 async function createFileToSend(file){
     try {
-        const customer = await Files.getCustomersToSend(file.codigo_cliente)
+        if(file.nome_cliente !== "Vinicius Picoli" || file.nome_cliente !== "Ivanor Truccolo") return
+        const customer = await Files.getCustomersToSend(file.codigo_cliente, file.token)
 
         const validCustomer = await validateCustomer(customer)
         if (!validCustomer) return
@@ -114,7 +115,7 @@ async function validateCustomer(customer){
         const phone = customer.telefone ? customer.telefone : customer.telefone2
         const formattedPhone = phone.replace(/\D/g, '')
 
-        const customerExists = await User.getCustomer(formattedPhone)
+        const customerExists = await User.getUser(formattedPhone)
         if(!customerExists) return true
 
         if(customerExists && !customerExists.name)

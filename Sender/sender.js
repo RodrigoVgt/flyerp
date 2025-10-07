@@ -1,10 +1,13 @@
 const Sender = () => {}
 
 const WabaController = require('../controllers/wabaController')
+const User = require('../controllers/user')
 
 Sender.sendFile = async (file) => {
     try {
        let response
+       const user = await User.getUser(file.phone ? file.phone : file.phone2)
+       if(user && user.block_messages) return true
        switch (file.origin) {
            case "10":
                response = await WabaController.sendFile(file, "ten_days")
