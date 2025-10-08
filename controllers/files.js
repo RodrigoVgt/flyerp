@@ -7,21 +7,7 @@ const axios = require('axios')
 
 Files.getFilesToSend = async (date) => {
     try {
-      const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
-      const fileList = []
-
-      const tokenList = process.env.TOKEN_LIST.split(',')
-
-      for(const token of tokenList){
-          const fileListAux = await fetchAllRecords(stringDate, token);
-
-          const fileListWithToken = fileListAux.map(iterator => ({
-              ...iterator,
-              token: token 
-          }));
-
-          fileList.push(...fileListWithToken);
-      }
+      const fileList = await fetchAllRecords(date)
 
       return fileList
     } catch (err) {
@@ -83,7 +69,51 @@ Files.updateOne = async function (id, data) {
   }
 }
 
-async function fetchAllRecords(date, token, inicioRegistros = 0, allRecords = []) {
+Files.getContract = async function (data) {
+  try {
+    const { cpf_cnpj_cliente } = data
+
+    const { BUSSINESS_NAME, TOKEN } = process.env
+    const ENDPOINT = `https://${BUSSINESS_NAME}.flyerp.com.br/apis/GetContrato`
+    const SEARCH_TERMS = ["anuidade"]
+
+    if (!cpf_cnpj_cliente) {
+        throw new Error("CPF/CNPJ do cliente é obrigatório para a busca do contrato.")
+    }
+
+    const response = await axios.get(ENDPOINT, {
+        params: {
+          "recorrencia" : 12, 
+          "situacao": 1, 
+          "cnpj_cpf_cliente" : cpf_cnpj_cliente,
+          "buscarEmTodasFiliais": true
+        },
+        headers: {
+            'Authorization': `Bearer ${TOKEN}` 
+        }
+    })
+
+    const contracts = response.data
+    if (!Array.isArray(contracts) || contracts.length === 0) {
+        return false
+    }
+
+    const hasMatch = contracts.some(contract => {
+        const contractDescription = (contract.descricao || '').toLowerCase()
+
+        return SEARCH_TERMS.some(term => 
+            contractDescription.includes(term)
+        )
+    })
+
+    return hasMatch
+  } catch (err) {
+    console.log(err)
+    return false
+  }
+}
+
+async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
     const response = await axios.get(url, {
@@ -91,10 +121,11 @@ async function fetchAllRecords(date, token, inicioRegistros = 0, allRecords = []
         "status": "aberto",
         "inicioRegistros": inicioRegistros,
         "dataVencimentoInicial": date,
-        "dataVencimentoFinal": date
+        "dataVencimentoFinal": date,
+        "buscarEmTodasFiliais": true
       },
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${process.env.TOKEN}`
       }
     });
 
@@ -120,10 +151,11 @@ async function fetchDayRecords(date, token, inicioRegistros = 0, allRecords = []
           "status": "aberto",
           "inicioRegistros": inicioRegistros,
           "dataEmissaoInicial": date,
-          "dataEmissaoFinal": date
+          "dataEmissaoFinal": date,
+          "buscarEmTodasFiliais": true
         },
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${process.env.TOKEN}`
         }
       });
       const newRecords = response.data
@@ -133,22 +165,23 @@ async function fetchDayRecords(date, token, inicioRegistros = 0, allRecords = []
         return allRecords
       }
 
-      return fetchDayRecords(date, token, inicioRegistros + 500, allRecords);
+      return fetchDayRecords(date, inicioRegistros + 500, allRecords);
   } catch (err) {
     console.log(err)
     return []
   }
 }
 
-async function getCustomer(code, token) {
+async function getCustomer(code) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetClienteEFornecedores`
     const response = await axios.get(url, {
         params: {
-            "codigo": code
+            "codigo": code,
+            "buscarEmTodasFiliais": true
         },
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${process.env.TOKEN}`
         }
     });
     return response?.data[0] || []

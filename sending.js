@@ -45,6 +45,8 @@ schedule.scheduleJob('00 12 * * *', async () => {// lembrar que aqui está -3h
         
         for(const iterator of filesWithDate){
             try {
+                const contract = await Files.getContract(iterator)
+                if(!contract) continue
                 await createFileToSend(iterator)
             } catch (err) {
                 console.log(err)
@@ -80,7 +82,7 @@ schedule.scheduleJob('00 13 * * *', async () => { //lembrar que aqui está -3h, 
 async function createFileToSend(file){
     try {
         if(file.nome_cliente !== "Vinicius Picoli" || file.nome_cliente !== "Ivanor Truccolo") return
-        const customer = await Files.getCustomersToSend(file.codigo_cliente, file.token)
+        const customer = await Files.getCustomersToSend(file.codigo_cliente)
 
         const validCustomer = await validateCustomer(customer)
         if (!validCustomer) return
@@ -88,7 +90,7 @@ async function createFileToSend(file){
         const newFile = new FileToSend({
             customer_id: file.codigo_cliente,
             name: file.nome_cliente,
-            phone: customer.telefone,
+            phone: customer.contato_telefone ? customer.contato_telefone : customer.telefone,
             phone2: customer.telefone2,
             status: file.url_pagamento ? 'pagos' : 'abertos',
             payment_start_date: file.data_emissao,
