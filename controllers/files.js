@@ -18,21 +18,7 @@ Files.getFilesToSend = async (date) => {
 
 Files.getNewEmission = async (date) => {
     try {
-      const stringDate = new Date(date).toISOString('pt-BR').split('T')[0]
-      const fileList = []
-
-      const tokenList = process.env.TOKEN_LIST.split(',')
-
-      for(const token of tokenList){
-          const fileListAux = await fetchDayRecords(stringDate, token);
-
-          const fileListWithToken = fileListAux.map(iterator => ({
-              ...iterator,
-              token: token 
-          }));
-
-          fileList.push(...fileListWithToken);
-      }
+        const fileList = await fetchDayRecords(date)
 
         return fileList
     } catch (err) {
@@ -93,7 +79,7 @@ Files.getContract = async function (data) {
         }
     })
 
-    const contracts = response.data
+    const contracts = response.data.contratos
     if (!Array.isArray(contracts) || contracts.length === 0) {
         return false
     }
@@ -143,7 +129,7 @@ async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
   }
 }
 
-async function fetchDayRecords(date, token, inicioRegistros = 0, allRecords = []) {
+async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
   try {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
       const response = await axios.get(url, {

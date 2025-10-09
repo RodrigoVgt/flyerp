@@ -9,44 +9,41 @@ const SentFiles = require('./models/sent_files')
 const Sender = require('./Sender/sender')
 const User = require('./controllers/user')
 
-schedule.scheduleJob('00 12 * * *', async () => {// lembrar que aqui está -3h
+const CNPJ = require('./extras/cnpj')
+
+schedule.scheduleJob('21 20 * * *', async () => {// lembrar que aqui está -3h
     try {
         const tenDaysDate = createDate(10)
-        const sevenDaysDate = createDate(7)
-        const threeDaysDate = createDate(3)
+        const fiveDaysDate = createDate(5)
         const oneDayDate = createDate(1)
         const dayDate = new Date()
-        const oneDayAfterDate = createDate(-1)
-        const fiveDaysAfterDate = createDate(-5)
-        const tenDaysAfterDate = createDate(-10)
+        const twoDaysAfterDate = createDate(-2)
+        const sevenDaysAfterDate = createDate(-7)
         const emissionDate = new Date()
 
         const tenDays = await Files.getFilesToSend(tenDaysDate)
-        const sevenDays = await Files.getFilesToSend(sevenDaysDate)
-        const threeDays = await Files.getFilesToSend(threeDaysDate)
+        const fiveDays = await Files.getFilesToSend(fiveDaysDate)
         const oneDay = await Files.getFilesToSend(oneDayDate)
         const day = await Files.getFilesToSend(dayDate)
-        const oneDayAfter = await Files.getFilesToSend(oneDayAfterDate)
-        const fiveDaysAfter = await Files.getFilesToSend(fiveDaysAfterDate)
-        const tenDaysAfter = await Files.getFilesToSend(tenDaysAfterDate)
+        const twoDaysAfter = await Files.getFilesToSend(twoDaysAfterDate)
+        const sevenDaysAfter = await Files.getFilesToSend(sevenDaysAfterDate)
         const emission = await Files.getNewEmission(emissionDate)
 
         const filesWithDate = [
             ...tenDays.map(file => ({ ...file, origin: 10 })),
-            ...sevenDays.map(file => ({ ...file, origin: 7 })),
-            ...threeDays.map(file => ({ ...file, origin: 3 })),
+            ...fiveDays.map(file => ({ ...file, origin: 5 })),
             ...oneDay.map(file => ({ ...file, origin: 1 })),
             ...day.map(file => ({ ...file, origin: 0 })),
-            ...oneDayAfter.map(file => ({ ...file, origin: -1 })),
-            ...fiveDaysAfter.map(file => ({ ...file, origin: -5 })),
-            ...tenDaysAfter.map(file => ({ ...file, origin: -10 })),
+            ...twoDaysAfter.map(file => ({ ...file, origin: -2 })),
+            ...sevenDaysAfter.map(file => ({ ...file, origin: -7 })),
             ...emission.map(file => ({ ...file, origin: 'emissao' }))
         ]
         
         for(const iterator of filesWithDate){
             try {
-                const contract = await Files.getContract(iterator)
-                if(!contract) continue
+                //const contract = await Files.getContract(iterator)
+                const validCnpj = validateCnpj(iterator.cpf_cnpj_cliente)
+                if(!validCnpj) continue
                 await createFileToSend(iterator)
             } catch (err) {
                 console.log(err)
@@ -59,7 +56,7 @@ schedule.scheduleJob('00 12 * * *', async () => {// lembrar que aqui está -3h
     }
 })
 
-schedule.scheduleJob('00 13 * * *', async () => { //lembrar que aqui está -3h, se colocar pra enviar as 8, vai enviar as 5h da manha!
+schedule.scheduleJob('34 22 * * *', async () => { //lembrar que aqui está -3h, se colocar pra enviar as 8, vai enviar as 5h da manha!
     try {
         const filesToSend = await Files.getDayFiles()
 
@@ -69,11 +66,13 @@ schedule.scheduleJob('00 13 * * *', async () => { //lembrar que aqui está -3h, 
                 if(response)
                     await Files.updateOne(iterator._id, {sent: true})
                     await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date(), messageId: response.messages ? response?.messages[0]?.id : null}).save()
+                    await new Promise(resolve => setTimeout(resolve, 5000))
             } catch (err) {
                 console.log(err)
             }
         }
 
+        const done = true
     } catch (err) {
         console.log(err)
     }
@@ -81,7 +80,6 @@ schedule.scheduleJob('00 13 * * *', async () => { //lembrar que aqui está -3h, 
 
 async function createFileToSend(file){
     try {
-        if(file.nome_cliente !== "Vinicius Picoli" || file.nome_cliente !== "Ivanor Truccolo") return
         const customer = await Files.getCustomersToSend(file.codigo_cliente)
 
         const validCustomer = await validateCustomer(customer)
@@ -89,6 +87,7 @@ async function createFileToSend(file){
 
         const newFile = new FileToSend({
             customer_id: file.codigo_cliente,
+            customer_cpf_cnpj: file.cpf_cnpj_cliente,
             name: file.nome_cliente,
             phone: customer.contato_telefone ? customer.contato_telefone : customer.telefone,
             phone2: customer.telefone2,
@@ -100,7 +99,7 @@ async function createFileToSend(file){
             link_boleto: file.link_boleto,
             link_fatura: file.link_fatura,
             url_pagamento: file.url_pagamento,
-            token: file.token
+            value: file.valor?.toFixed(2).toString().replace('.', ',') || "*Valor não informado*"
         })
 
         await newFile.save()
@@ -135,6 +134,20 @@ async function validateCustomer(customer){
         console.log(err)
         return false
     }
+}
+
+function validateCnpj(cnpj){
+    try {
+        const clean = clearCNPJ(cnpj)
+        return CNPJ.includes(clean)
+    } catch (err) {
+        console.log(err)
+        return false
+    }
+}
+
+function clearCNPJ(cnpj) {
+  return cnpj.replace(/\D/g, '')
 }
 
 function createDate(days){

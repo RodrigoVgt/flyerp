@@ -42,13 +42,17 @@ const FilesToSend = new mongoose.Schema({
         type: String,
         default: null
     },
-    token: {
-        type: String,
-        default: null
-    },
     origin: {
         type: String,
         default: null
+    },
+    customer_cpf_cnpj: {
+        type: String,
+        default: ""
+    },
+    value: {
+        type: String,
+        default: "00,00"
     }
 });
 

@@ -5,26 +5,6 @@ require ('dotenv').config()
 const FilesToSend = require('../models/files_to_send')
 const SentFiles = require('../models/sent_files')
 
-const Files = require('../controllers/files')
-
-router.get('/get_files', async (req, res) => {
-    try {
-        const fileList = await Files.getFilesToSend(req, res)
-        return res.status(200).json("ok")
-    } catch (err) {
-        res.status(500).json({ message: err.message })
-    }
-})
-
-router.get('/get_customers', async (req, res) => {
-    try {
-        const customerList = await Files.getCustomersToSend(req, res)
-        return res.status(200).json("ok")
-    } catch (err) {
-        res.status(500).json({ message: err.message })
-    }
-})
-
 router.get('/', async (req, res) => {
     try {
         //rota teste
@@ -34,8 +14,33 @@ router.get('/', async (req, res) => {
     }
 })
 
+router.post('/create_mock_data_to_send', async (req, res) => {
+    try {
+        const phone = req.body.phone
+        const name = req.body.name
+        const types = req.body.types
+
+        for(const iterator of types){
+            await FilesToSend.create({
+                customer_id: 2739,
+                name,
+                phone,
+                payment_end_date: "08/10/2025",
+                link_boleto: "https://renovaonline.flyerp.com.br/VisualizarFatura.aspx?guid=e42c43fc-a0bc-4917-8c40-72c459337ffe",
+                origin: iterator,
+                value: (25.000000).toFixed(2).toString().replace('.', ',')
+            })
+        }
+
+        return res.status(200).json("ok")
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+})
+
 router.delete('/files_to_send', async (req, res) => {
     try {
+        //return res.status(200).json("Nice try bozo")
         await FilesToSend.deleteMany({})
         return res.status(200).json("ok")
     } catch (err) {
@@ -45,6 +50,7 @@ router.delete('/files_to_send', async (req, res) => {
 
 router.delete('/sent_files', async (req, res) => {
     try {
+        //return res.status(200).json("Nice try bozo")
         await SentFiles.deleteMany()
         return res.status(200).json("ok")
     } catch (err) {
