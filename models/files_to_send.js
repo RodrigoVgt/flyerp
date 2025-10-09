@@ -1,6 +1,10 @@
 const mongoose = require('../database/db');
 
 const FilesToSend = new mongoose.Schema({
+    id: {
+        type: String,
+        required: true
+    },
     customer_id: {
         type: String,
         required: true

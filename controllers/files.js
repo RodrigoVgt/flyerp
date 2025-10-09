@@ -18,6 +18,9 @@ Files.getFilesToSend = async (date) => {
 
 Files.getNewEmission = async (date) => {
     try {
+        const limitDate = new date("2025-10-15")
+        if(date > limitDate)
+            return []
         const fileList = await fetchDayRecords(date)
 
         return fileList
@@ -49,6 +52,15 @@ Files.getDayFiles = async function () {
 Files.updateOne = async function (id, data) {
   try {
     return await FilesToSend.updateOne({ _id: id }, { $set: data })
+  } catch (err) {
+    console.log(err)
+    return null
+  }
+}
+
+Files.alreadyExists = async function (id, origin) {
+  try {
+    return await FilesToSend.findOne({ id: id, origin: origin })
   } catch (err) {
     console.log(err)
     return null
@@ -104,10 +116,12 @@ async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
     const response = await axios.get(url, {
       params: {
-        "status": "aberto",
+        "status": "abertos",
         "inicioRegistros": inicioRegistros,
         "dataVencimentoInicial": date,
         "dataVencimentoFinal": date,
+        "dataEmissaoInicial": "10/10/2025",
+        "dataEmissaoFinal": "15/10/2025",
         "buscarEmTodasFiliais": true
       },
       headers: {
@@ -134,7 +148,7 @@ async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
     const url = `https://${process.env.BUSSINESS_NAME}.flyerp.com.br/apis/GetContasAReceber`
       const response = await axios.get(url, {
         params: {
-          "status": "aberto",
+          "status": "abertos",
           "inicioRegistros": inicioRegistros,
           "dataEmissaoInicial": date,
           "dataEmissaoFinal": date,

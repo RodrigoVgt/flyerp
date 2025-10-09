@@ -9,9 +9,9 @@ const SentFiles = require('./models/sent_files')
 const Sender = require('./Sender/sender')
 const User = require('./controllers/user')
 
-const CNPJ = require('./extras/cnpj')
+const { CNPJ } = require('./extras/cnpj')
 
-schedule.scheduleJob('21 20 * * *', async () => {// lembrar que aqui está -3h
+schedule.scheduleJob('45 15 * * *', async () => {// lembrar que aqui está -3h, começar em 15:45->12:45
     try {
         const tenDaysDate = createDate(10)
         const fiveDaysDate = createDate(5)
@@ -44,6 +44,8 @@ schedule.scheduleJob('21 20 * * *', async () => {// lembrar que aqui está -3h
                 //const contract = await Files.getContract(iterator)
                 const validCnpj = validateCnpj(iterator.cpf_cnpj_cliente)
                 if(!validCnpj) continue
+                const alreadyExists = await Files.alreadyExists(iterator.id, iterator.origin)
+                if(alreadyExists) continue
                 await createFileToSend(iterator)
             } catch (err) {
                 console.log(err)
@@ -56,7 +58,7 @@ schedule.scheduleJob('21 20 * * *', async () => {// lembrar que aqui está -3h
     }
 })
 
-schedule.scheduleJob('34 22 * * *', async () => { //lembrar que aqui está -3h, se colocar pra enviar as 8, vai enviar as 5h da manha!
+schedule.scheduleJob('00 16 * * *', async () => { //começar em 16:00 -> 13:00
     try {
         const filesToSend = await Files.getDayFiles()
 
@@ -86,6 +88,7 @@ async function createFileToSend(file){
         if (!validCustomer) return
 
         const newFile = new FileToSend({
+            id: file.id,
             customer_id: file.codigo_cliente,
             customer_cpf_cnpj: file.cpf_cnpj_cliente,
             name: file.nome_cliente,
