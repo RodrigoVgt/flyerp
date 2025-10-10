@@ -18,7 +18,7 @@ Files.getFilesToSend = async (date) => {
 
 Files.getNewEmission = async (date) => {
     try {
-        const limitDate = new date("2025-10-15")
+        const limitDate = new Date("2025-10-15")
         if(date > limitDate)
             return []
         const fileList = await fetchDayRecords(date)

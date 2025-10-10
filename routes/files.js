@@ -40,7 +40,7 @@ router.post('/create_mock_data_to_send', async (req, res) => {
 
 router.delete('/files_to_send', async (req, res) => {
     try {
-        //return res.status(200).json("Nice try bozo")
+        return res.status(200).json("Nice try bozo")
         await FilesToSend.deleteMany({})
         return res.status(200).json("ok")
     } catch (err) {
@@ -50,7 +50,7 @@ router.delete('/files_to_send', async (req, res) => {
 
 router.delete('/sent_files', async (req, res) => {
     try {
-        //return res.status(200).json("Nice try bozo")
+        return res.status(200).json("Nice try bozo")
         await SentFiles.deleteMany()
         return res.status(200).json("ok")
     } catch (err) {
