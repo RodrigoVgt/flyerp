@@ -11,7 +11,7 @@ const User = require('./controllers/user')
 
 const { CNPJ } = require('./extras/cnpj')
 
-schedule.scheduleJob('45 15 * * *', async () => {// lembrar que aqui está -3h, começar em 15:45->12:45
+schedule.scheduleJob('46 13 * * *', async () => {// lembrar que aqui está -3h, começar em 15:45->12:45
     try {
         const tenDaysDate = createDate(10)
         const fiveDaysDate = createDate(5)
@@ -58,7 +58,7 @@ schedule.scheduleJob('45 15 * * *', async () => {// lembrar que aqui está -3h, 
     }
 })
 
-schedule.scheduleJob('00 16 * * *', async () => { //começar em 16:00 -> 13:00
+schedule.scheduleJob('06 14 * * *', async () => { //começar em 16:00 -> 13:00
     try {
         const filesToSend = await Files.getDayFiles()
 
@@ -68,7 +68,7 @@ schedule.scheduleJob('00 16 * * *', async () => { //começar em 16:00 -> 13:00
                 if(response)
                     await Files.updateOne(iterator._id, {sent: true})
                     await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date(), messageId: response.messages ? response?.messages[0]?.id : null}).save()
-                    await new Promise(resolve => setTimeout(resolve, 5000))
+                    await new Promise(resolve => setTimeout(resolve, 3000))
             } catch (err) {
                 console.log(err)
             }

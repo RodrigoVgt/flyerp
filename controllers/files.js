@@ -18,7 +18,7 @@ Files.getFilesToSend = async (date) => {
 
 Files.getNewEmission = async (date) => {
     try {
-        const limitDate = new Date("2025-10-15")
+        const limitDate = new Date("2025-10-25")
         if(date > limitDate)
             return []
         const fileList = await fetchDayRecords(date)
@@ -120,8 +120,8 @@ async function fetchAllRecords(date, inicioRegistros = 0, allRecords = []) {
         "inicioRegistros": inicioRegistros,
         "dataVencimentoInicial": date,
         "dataVencimentoFinal": date,
-        "dataEmissaoInicial": "10/10/2025",
-        "dataEmissaoFinal": "15/10/2025",
+        "dataEmissaoInicial": "21/10/2025",
+        "dataEmissaoFinal": "24/10/2025",
         "buscarEmTodasFiliais": true
       },
       headers: {
@@ -150,8 +150,8 @@ async function fetchDayRecords(date, inicioRegistros = 0, allRecords = []) {
         params: {
           "status": "abertos",
           "inicioRegistros": inicioRegistros,
-          "dataEmissaoInicial": date,
-          "dataEmissaoFinal": date,
+          "dataEmissaoInicial": "21/10/2025",
+          "dataEmissaoFinal": "24/10/2025",
           "buscarEmTodasFiliais": true
         },
         headers: {

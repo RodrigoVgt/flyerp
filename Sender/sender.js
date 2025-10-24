@@ -6,6 +6,7 @@ const User = require('../controllers/user')
 Sender.sendFile = async (file) => {
     try {
        let response
+       if(!file || (!file.link_boleto && !file.link_fatura)) return null
        const user = await User.getUser(file.phone ? file.phone : file.phone2)
        if(user && user.block_messages) return true
        switch (file.origin) {
@@ -33,7 +34,9 @@ Sender.sendFile = async (file) => {
            default:
                return null
        }
-       return response
+       if(response && response.success)
+           return response
+       throw response.message
     } catch (err) {
         console.log(err)
         return null
