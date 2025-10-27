@@ -57,6 +57,10 @@ const FilesToSend = new mongoose.Schema({
     value: {
         type: String,
         default: "00,00"
+    },
+    trys: {
+        type: Number,
+        default: 0
     }
 });
 

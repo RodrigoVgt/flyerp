@@ -65,10 +65,13 @@ schedule.scheduleJob('00 16 * * *', async () => { //começar em 16:00 -> 13:00
         for(const iterator of filesToSend){
             try {
                 const response = await Sender.sendFile(iterator)
-                if(response)
+                if(response){
                     await Files.updateOne(iterator._id, {sent: true})
                     await new SentFiles({ name: iterator.name, phone: iterator.phone, status: iterator.status, sent_at: new Date(), messageId: response.messages ? response?.messages[0]?.id : null}).save()
                     await new Promise(resolve => setTimeout(resolve, 3000))
+                    continue
+                }
+                await Files.updateOne(iterator._id, {trys: iterator.trys ? (iterator.trys + 1) : 1})
             } catch (err) {
                 console.log(err)
             }

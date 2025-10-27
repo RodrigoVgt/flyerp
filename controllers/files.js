@@ -42,7 +42,7 @@ Files.getCustomersToSend = async (id, token) => {
 
 Files.getDayFiles = async function () {
   try {
-    return await FilesToSend.find({sent: false})
+    return await FilesToSend.find({sent: false, trys: {$lt: 4}})
   } catch (err) {
     console.log(err)
     return null
