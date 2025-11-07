@@ -6,6 +6,8 @@ const FilesToSend = require('../models/files_to_send')
 const SentFiles = require('../models/sent_files')
 const ManualSending = require('../Sender/manual_sending')
 
+const sentFilesController = require('../controllers/sentFilesController')
+
 router.get('/', async (req, res) => {
     try {
         //rota teste
@@ -62,6 +64,15 @@ router.delete('/sent_files', async (req, res) => {
 router.get('/send_customers', async (req, res) => {
     try {
         const files = await ManualSending.send({})
+        return res.status(200).json(files)
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+})
+
+router.get('/get_sent_files', async (req, res) => {
+    try {
+        const files = await sentFilesController.find()
         return res.status(200).json(files)
     } catch (err) {
         res.status(500).json({ message: err.message })
