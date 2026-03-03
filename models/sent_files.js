@@ -18,6 +18,9 @@ const SentFiles = new mongoose.Schema({
     },
     messageId: {
         type: String
+    },
+    template: {
+        type: String
     }
 });
 

@@ -7,6 +7,7 @@ const SentFiles = require('../models/sent_files')
 const ManualSending = require('../Sender/manual_sending')
 
 const sentFilesController = require('../controllers/sentFilesController')
+const userImportController = require('../controllers/userImportController')
 
 router.get('/', async (req, res) => {
     try {
@@ -63,7 +64,7 @@ router.delete('/sent_files', async (req, res) => {
 
 router.get('/send_customers', async (req, res) => {
     try {
-        const files = await ManualSending.send({})
+        const files = await ManualSending.send(req.query.template_name)
         return res.status(200).json(files)
     } catch (err) {
         res.status(500).json({ message: err.message })
@@ -77,6 +78,10 @@ router.get('/get_sent_files', async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message })
     }
+})
+
+router.post('/import_users_nps', async (req, res) => {
+    return userImportController.importFromNpsXlsx(req, res)
 })
 
 module.exports = router

@@ -3,94 +3,61 @@ const ManualSending = () => {}
 const { default: axios } = require('axios')
 require('dotenv').config()
 
-// 1. Importa o módulo de File System para ler arquivos (necessário no Node.js)
-const { readFile } = require('fs/promises')
-
 const SentFiles = require('../models/sent_files')
+const UserModel = require('../models/user')
 
 /**
- * Função para processar a string CSV e extrair os campos necessários
- * @param {string} csvString - O conteúdo completo do arquivo CSV em formato string
- * @returns {Array<Object>} Um array de objetos com as chaves cnpj, name e phone
- */
-const processarCSV = (csvString) => {
-  // Divide a string em linhas
-    try {
-        const linhas = csvString.trim().split('\n')
-
-        // A primeira linha são os cabeçalhos (headers)
-        // Nota: Usa split(',') e não manipula vírgulas dentro de aspas (pode ser problema em CSVs complexos)
-        const headers = linhas[0].split(';')
-
-        // Mapeamento dos cabeçalhos para os nomes das propriedades
-        const indexCnpj = headers.indexOf('CNPJ Cliente')
-        const indexNomeFantasia = headers.indexOf('Nome Fantasia Cliente')
-        const indexTelefone = headers.indexOf('Telefone Final')
-
-        if (indexCnpj === -1 || indexNomeFantasia === -1 || indexTelefone === -1) {
-            console.error('Erro: Um ou mais cabeçalhos necessários não foram encontrados no CSV')
-            return []
-        }
-
-        // Processa as linhas de dados (a partir da segunda linha)
-        const dados = linhas.slice(1).map(linha => {
-            const valores = linha.split(';')
-
-            // Retorna o objeto formatado
-            return {
-            cnpj: valores[indexCnpj],
-            name: valores[indexNomeFantasia],
-            phone: valores[indexTelefone]
-            }
-        })
-
-        return dados
-    } catch (error) {
-        console.error('Erro ao processar o CSV:', error)
-        return []
-    }
-}
-
-/**
- * Função principal para carregar o arquivo e iniciar o processamento
+ * Função principal para carregar os contatos da base de usuários
  */
 const carregarEProcessarLista = async () => {
-  const filePath = 'customers/list.csv'
-
   try {
-    // Lê o arquivo de forma assíncrona, codificação 'utf-8' para texto
-    const fileContent = await readFile(filePath, { encoding: 'utf-8' })
-    
-    console.log(`Arquivo ${filePath} carregado com sucesso`)
+    const dadosClientes = await UserModel.find({
+        block_messages: { $ne: true },
+        phone: { $exists: true, $ne: '' }
+    })
+    .select('name phone cpf user_code')
+    .lean()
 
-    // Chama a função de processamento
-    const dadosClientes = processarCSV(fileContent)
-    
-    console.log('Total de clientes processados:', dadosClientes.length)
+    console.log('Total de clientes carregados da base:', dadosClientes.length)
 
     return dadosClientes
   } catch (error) {
-    // Trata erros, como arquivo não encontrado
-    if (error.code === 'ENOENT') {
-      console.error(`Erro: Arquivo não encontrado no caminho esperado: ${filePath}`)
-      console.error('Verifique se a pasta "customers" e o arquivo "list.csv" existem e estão na raiz do projeto')
-    } else {
-      console.error('Erro ao ler ou processar o arquivo:', error)
-    }
-    return null
+    console.error('Erro ao carregar usuários da base:', error)
+    return []
   }
 }
 
 
-ManualSending.send = async () => {
+ManualSending.send = async (template_name) => {
     const data = await carregarEProcessarLista()
+    if (!Array.isArray(data) || data.length === 0) {
+        return []
+    }
 
     for(const iterator of data){
         try {
             if(!iterator.phone) continue
-            const config = await buildNoParamWabaMessage({phone: iterator.phone, template: "announcement"})
+            const config = await buildNoParamWabaMessage({phone: iterator.phone, template: template_name})
             const response = await sendWabaMessage(config)
-            await new SentFiles({ name: iterator.name, phone: iterator.phone, sent_at: new Date()}).save()
+            if (!response.success) {
+                console.log('Falha no envio:', {
+                    name: iterator.name,
+                    phone: iterator.phone,
+                    details: response.message
+                })
+                continue
+            }
+            const messageId = response && response.message && response.message.messages && response.message.messages[0]
+                ? response.message.messages[0].id
+                : null
+            await new SentFiles({
+                name: iterator.name,
+                phone: iterator.phone,
+                sent_at: new Date(),
+                template: template_name,
+                status: 'accepted',
+                messageId
+            }).save()
             await new Promise(resolve => setTimeout(resolve, 3000))
         } catch (err) {
             console.log("Nome: " + iterator.name, "Telefone: " + iterator.phone)
@@ -104,7 +71,6 @@ ManualSending.send = async () => {
 async function buildNoParamWabaMessage(data){
     let phone = data.phone.toString().match(/\d/g).join('')
     if(!phone.startsWith('55')) phone = '55' + phone
-    if(phone.length < 11) phone = '55' + phone
     const config = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -135,19 +101,37 @@ async function sendWabaMessage(config) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + process.env.WABA_ACCESS_TOKEN
             }
-        const response = await axios.post(url, JSON.stringify(config), {headers})
+        const response = await axios.post(url, config, { headers })
         if(response.status != 200)
             throw new Error(response.statusText ? response.statusText : response.data.error.message)
+
+        const messageId = response
+            && response.data
+            && response.data.messages
+            && response.data.messages[0]
+            ? response.data.messages[0].id
+            : null
+
+        if (!messageId) {
+            return {
+                success: false,
+                message: {
+                    reason: 'API retornou 200, mas sem message id',
+                    response: response.data
+                }
+            }
+        }
         
         return {
             success: true,
-            message: response
+            message: response.data
         }
     } catch (err) {
-        console.log(err)
+        const details = err && err.response && err.response.data ? err.response.data : err.message
+        console.log('Erro no envio WABA:', details)
         return {
             success: false,
-            message: err
+            message: details
         }
     }
 }

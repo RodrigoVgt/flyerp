@@ -14,6 +14,9 @@ const User = new mongoose.Schema({
     block_messages: {
         type: Boolean,
         default: false
+    },
+    cpf: {
+        type: String,
     }
 });
 
