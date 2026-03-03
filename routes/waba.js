@@ -14,7 +14,6 @@ router.post('/:phone', async function(req, res) {
         res.status(200).send({})
         for (const entry of req.body.entry) {
             const changes = entry && entry.changes ? entry.changes : []
-            console.log('CHANGES:   ', changes)
             for (const change of changes) {
                 const statuses = change.value && change.value.statuses ? change.value.statuses : []
                 for (const item of statuses) {
@@ -24,6 +23,8 @@ router.post('/:phone', async function(req, res) {
 
                         const newStatus = item.status || 'unknown'
                         const errorData = item.errors && item.errors[0] ? item.errors[0] : null
+                        const previousRecord = await SentFiles.findOne({ messageId: messageId })
+                        const previousStatus = previousRecord && previousRecord.status ? previousRecord.status : null
 
                         const updateData = {
                             status: newStatus
@@ -38,6 +39,19 @@ router.post('/:phone', async function(req, res) {
                             { $set: updateData },
                             { sort: { sent_at: -1 } }
                         )
+
+                        const changed = previousStatus !== updateData.status
+                        const timestampRaw = item.timestamp || null
+                        const eventDate = timestampRaw ? new Date(Number(timestampRaw) * 1000).toISOString() : null
+                        console.log('[WABA_STATUS]', {
+                            messageId: messageId,
+                            recipient: item.recipient_id || null,
+                            status: updateData.status,
+                            previousStatus: previousStatus,
+                            changed: changed,
+                            timestamp: timestampRaw,
+                            eventDate: eventDate
+                        })
                     } catch (statusErr) {
                         console.log('Erro ao processar status do webhook:', statusErr)
                     }
