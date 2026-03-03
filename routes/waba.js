@@ -14,6 +14,7 @@ router.post('/:phone', async function(req, res) {
         res.status(200).send({})
         for (const entry of req.body.entry) {
             const changes = entry && entry.changes ? entry.changes : []
+            console.log('CHANGES:   ', changes)
             for (const change of changes) {
                 const statuses = change.value && change.value.statuses ? change.value.statuses : []
                 for (const item of statuses) {
