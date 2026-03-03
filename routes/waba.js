@@ -23,6 +23,17 @@ router.post('/:phone', async function(req, res) {
 
                         const newStatus = item.status || 'unknown'
                         const errorData = item.errors && item.errors[0] ? item.errors[0] : null
+                        const errorList = item.errors && Array.isArray(item.errors)
+                            ? item.errors.map(function(errItem) {
+                                return {
+                                    code: errItem.code || null,
+                                    title: errItem.title || null,
+                                    message: errItem.message || null,
+                                    error_data: errItem.error_data || null,
+                                    href: errItem.href || null
+                                }
+                            })
+                            : []
                         const previousRecord = await SentFiles.findOne({ messageId: messageId })
                         const previousStatus = previousRecord && previousRecord.status ? previousRecord.status : null
 
@@ -43,12 +54,27 @@ router.post('/:phone', async function(req, res) {
                         const changed = previousStatus !== updateData.status
                         const timestampRaw = item.timestamp || null
                         const eventDate = timestampRaw ? new Date(Number(timestampRaw) * 1000).toISOString() : null
+
+                        if (updateData.status === 'failed') {
+                            console.log('[WABA_STATUS_FAILED]', {
+                                messageId: messageId,
+                                recipient: item.recipient_id || null,
+                                previousStatus: previousStatus,
+                                status: updateData.status,
+                                changed: changed,
+                                errors: errorList,
+                                timestamp: timestampRaw,
+                                eventDate: eventDate
+                            })
+                        }
+
                         console.log('[WABA_STATUS]', {
                             messageId: messageId,
                             recipient: item.recipient_id || null,
                             status: updateData.status,
                             previousStatus: previousStatus,
                             changed: changed,
+                            errors: errorList,
                             timestamp: timestampRaw,
                             eventDate: eventDate
                         })
