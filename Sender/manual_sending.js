@@ -29,16 +29,11 @@ const carregarEProcessarLista = async () => {
 
 
 ManualSending.send = async (template_name) => {
-    //const data = await carregarEProcessarLista()
-    //if (!Array.isArray(data) || data.length === 0) {
-    //    return []
-    //}
-    const data = [
-        {
-            name: 'Vini Picoli',
-            phone: '554998061999'
-        }
-    ]
+    const data = await carregarEProcessarLista()
+    if (!Array.isArray(data) || data.length === 0) {
+        return []
+    }
+
 
     for(const iterator of data){
         try {
