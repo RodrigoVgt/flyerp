@@ -34,7 +34,6 @@ ManualSending.send = async (template_name) => {
         return []
     }
 
-
     for(const iterator of data){
         try {
             if(!iterator.phone) continue
@@ -59,7 +58,7 @@ ManualSending.send = async (template_name) => {
                 status: 'accepted',
                 messageId
             }).save()
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            await new Promise(resolve => setTimeout(resolve, 2000))
         } catch (err) {
             console.log("Nome: " + iterator.name, "Telefone: " + iterator.phone)
         }

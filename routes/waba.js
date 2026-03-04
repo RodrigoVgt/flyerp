@@ -68,16 +68,6 @@ router.post('/:phone', async function(req, res) {
                             })
                         }
 
-                        console.log('[WABA_STATUS]', {
-                            messageId: messageId,
-                            recipient: item.recipient_id || null,
-                            status: updateData.status,
-                            previousStatus: previousStatus,
-                            changed: changed,
-                            errors: errorList,
-                            timestamp: timestampRaw,
-                            eventDate: eventDate
-                        })
                     } catch (statusErr) {
                         console.log('Erro ao processar status do webhook:', statusErr)
                     }
