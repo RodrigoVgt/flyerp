@@ -67,6 +67,114 @@ ManualSending.send = async (template_name) => {
     const done = true
 }
 
+/**
+ * Reenvia mensagens falhadas de um template para outro.
+ * @param {string} old_template Template antigo.
+ * @param {string} new_template Template novo.
+ * @returns {Promise<Object>} Objeto com informações sobre o processamento.
+ * @property {boolean} success Indica se a operação foi bem sucedida.
+ * @property {string} old_template Template antigo.
+ * @property {string} new_template Template novo.
+ * @property {number} processed Quantidade de registros processados.
+ * @property {number} resent Quantidade de mensagens reenviadas com sucesso.
+ * @property {number} skippedBlocked Quantidade de mensagens bloqueadas e não reenviadas novamente.
+ * @property {number} failedAgain Quantidade de mensagens que falharam novamente ao serem reenviadas.
+ */
+ManualSending.resendFailedByTemplate = async function (old_template, new_template) {
+    if (!old_template || !new_template) {
+        return {
+            success: false,
+            message: 'Parâmetros old_template e new_template são obrigatórios.'
+        }
+    }
+
+    const failedRows = await SentFiles.find({
+        template: old_template,
+        status: 'failed'
+    }).sort({ sent_at: -1 }).lean()
+
+    if (!Array.isArray(failedRows) || failedRows.length === 0) {
+        return {
+            success: true,
+            old_template,
+            new_template,
+            processed: 0,
+            resent: 0,
+            skippedBlocked: 0,
+            failedAgain: 0,
+            message: 'Nenhum registro failed encontrado para o template informado.'
+        }
+    }
+
+    const selectedRows = []
+    const seenPhones = new Set()
+    for (const row of failedRows) {
+        if (!row.phone || seenPhones.has(row.phone)) continue
+        seenPhones.add(row.phone)
+        selectedRows.push(row)
+    }
+
+    let resent = 0
+    let skippedBlocked = 0
+    let failedAgain = 0
+
+    for (const row of selectedRows) {
+        try {
+            const user = await UserModel.findOne({ phone: row.phone }).select('block_messages').lean()
+            if (user && user.block_messages) {
+                skippedBlocked += 1
+                continue
+            }
+
+            const config = await buildNoParamWabaMessage({ phone: row.phone, template: new_template })
+            const response = await sendWabaMessage(config)
+
+            if (!response.success) {
+                failedAgain += 1
+                console.log('Falha no reenvio:', {
+                    phone: row.phone,
+                    old_template: old_template,
+                    new_template: new_template,
+                    details: response.message
+                })
+                continue
+            }
+
+            const newMessageId = response && response.message && response.message.messages && response.message.messages[0]
+                ? response.message.messages[0].id
+                : null
+
+            await SentFiles.updateOne(
+                { _id: row._id },
+                {
+                    $set: {
+                        messageId: newMessageId,
+                        status: 'resent',
+                        sent_at: new Date(),
+                        template: new_template
+                    }
+                }
+            )
+
+            resent += 1
+            await new Promise(resolve => setTimeout(resolve, 5000))
+        } catch (err) {
+            failedAgain += 1
+            console.log('Erro ao processar reenvio:', err)
+        }
+    }
+
+    return {
+        success: true,
+        old_template,
+        new_template,
+        processed: selectedRows.length,
+        resent,
+        skippedBlocked,
+        failedAgain
+    }
+}
+
 
 async function buildNoParamWabaMessage(data){
     let phone = data.phone.toString().match(/\d/g).join('')

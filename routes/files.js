@@ -84,4 +84,19 @@ router.post('/import_users_nps', async (req, res) => {
     return userImportController.importFromNpsXlsx(req, res)
 })
 
+router.post('/resend_failed_template', async (req, res) => {
+    try {
+        const old_template = req.body ? req.body.old_template : null
+        const new_template = req.body ? req.body.new_template : null
+
+        const result = await ManualSending.resendFailedByTemplate(old_template, new_template)
+        if (!result.success) {
+            return res.status(400).json(result)
+        }
+        return res.status(200).json(result)
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+})
+
 module.exports = router
