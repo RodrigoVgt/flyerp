@@ -80,6 +80,15 @@ router.get('/get_sent_files', async (req, res) => {
     }
 })
 
+router.get('/failed_survey_templates_users', async (req, res) => {
+    try {
+        const failedUsers = await sentFilesController.findFailedSurveyUsers()
+        return res.status(200).json(failedUsers)
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+})
+
 router.post('/import_users_nps', async (req, res) => {
     return userImportController.importFromNpsXlsx(req, res)
 })

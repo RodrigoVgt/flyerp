@@ -13,7 +13,8 @@ const carregarEProcessarLista = async () => {
   try {
     const dadosClientes = await UserModel.find({
         block_messages: { $ne: true },
-        phone: { $exists: true, $ne: '' }
+        phone: { $exists: true, $ne: '' },
+        name: { $exists: true, $ne: '' }
     })
     .select('name phone cpf user_code')
     .lean()
@@ -29,7 +30,9 @@ const carregarEProcessarLista = async () => {
 
 
 ManualSending.send = async (template_name) => {
-    const data = await carregarEProcessarLista()
+    //const data = await carregarEProcessarLista()
+    //const data = [{name: 'Rodrigo Vogt', phone: '554998175557'}]
+
     if (!Array.isArray(data) || data.length === 0) {
         return []
     }
@@ -51,14 +54,14 @@ ManualSending.send = async (template_name) => {
                 ? response.message.messages[0].id
                 : null
             await new SentFiles({
-                name: iterator.name,
+                name: iterator.name || "",
                 phone: iterator.phone,
                 sent_at: new Date(),
                 template: template_name,
                 status: 'accepted',
                 messageId
             }).save()
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            await new Promise(resolve => setTimeout(resolve, 4000))
         } catch (err) {
             console.log("Nome: " + iterator.name, "Telefone: " + iterator.phone)
         }
